@@ -4,14 +4,19 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-    LayoutDashboard,
-    FolderKanban,
+    Home,
+    BedDouble,
+    CalendarCheck,
+    Calendar,
     Users,
-    Settings,
+    LogOut,
     Bell,
     Sun,
     Moon,
     User,
+    Settings,
+    ChevronDown,
+    ShieldCheck,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -20,6 +25,7 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const pathname = usePathname();
 
     // Initialize theme from localStorage
@@ -45,24 +51,45 @@ export default function DashboardLayout({
         {
             name: "Tableau de bord",
             href: "/dashboard",
-            icon: LayoutDashboard,
+            icon: Home,
         },
         {
-            name: "Projets",
-            href: "/dashboard/projets",
-            icon: FolderKanban,
+            name: "Chambre",
+            href: "/dashboard/chambre",
+            icon: BedDouble,
         },
         {
-            name: "Clients",
-            href: "/dashboard/clients",
+            name: "Reservation",
+            href: "/dashboard/reservation",
+            icon: CalendarCheck,
+        },
+        {
+            name: "Calendrier",
+            href: "/dashboard/calendrier",
+            icon: Calendar,
+        },
+        {
+            name: "Client",
+            href: "/dashboard/client",
             icon: Users,
         },
         {
-            name: "Paramètres",
-            href: "/dashboard/parametres",
-            icon: Settings,
+            name: "Sortie",
+            href: "/dashboard/sortie",
+            icon: LogOut,
+        },
+        {
+            name: "Profil",
+            href: "/dashboard/profil",
+            icon: User,
+        },
+        {
+            name: "Droit d'accès",
+            href: "/dashboard/acces",
+            icon: ShieldCheck,
         },
     ];
+
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -75,7 +102,7 @@ export default function DashboardLayout({
                             <span className="text-white font-bold text-lg">G</span>
                         </div>
                         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                            Gestion
+                            Shalimar Hotel
                         </h1>
                     </div>
                 </div>
@@ -102,22 +129,7 @@ export default function DashboardLayout({
                     })}
                 </nav>
 
-                {/* User Section */}
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-sm">UC</span>
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                Utilisateur
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                En ligne
-                            </p>
-                        </div>
-                    </div>
-                </div>
+
             </aside>
 
             {/* Main Content Area */}
@@ -145,24 +157,6 @@ export default function DashboardLayout({
                                 <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ring-2 ring-white dark:ring-slate-900"></span>
                             </button>
 
-                            {/* User Profile */}
-                            <button
-                                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 group"
-                                aria-label="Profil utilisateur"
-                            >
-                                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                                    <User className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="hidden md:block text-left">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                        Utilisateur Connecté
-                                    </p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        Admin
-                                    </p>
-                                </div>
-                            </button>
-
                             {/* Theme Toggle */}
                             <button
                                 onClick={toggleTheme}
@@ -175,6 +169,58 @@ export default function DashboardLayout({
                                     <Moon className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:rotate-12 transition-transform duration-300" />
                                 )}
                             </button>
+
+                            {/* User Profile */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 group"
+                                    aria-label="Profil utilisateur"
+                                >
+                                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                                        <User className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="hidden md:block text-left">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                            Utilisateur Connecté
+                                        </p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            Admin
+                                        </p>
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {/* User Dropdown */}
+                                {isUserMenuOpen && (
+                                    <>
+                                        {/* Backdrop to close on click outside */}
+                                        <div
+                                            className="fixed inset-0 z-10"
+                                            onClick={() => setIsUserMenuOpen(false)}
+                                        ></div>
+                                        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-20 animate-in fade-in zoom-in duration-200 origin-top-right">
+                                            <Link
+                                                href="/dashboard/parametres"
+                                                className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                                Paramètres
+                                            </Link>
+                                            <div className="h-px bg-slate-200 dark:bg-slate-800 my-2"></div>
+                                            <Link
+                                                href="/"
+                                                className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                Déconnexion
+                                            </Link>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </header>

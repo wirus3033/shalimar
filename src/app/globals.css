@@ -2,8 +2,23 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1d2939;
+  /* slate-900 equivalent */
+  --text-muted: #475467;
+  /* slate-600 equivalent */
 }
+
+.dark {
+  --background: #0a0d12;
+  /* slate-950 equivalent */
+  --foreground: #f2f4f7;
+  /* slate-50 equivalent */
+  --text-muted: #98a2b3;
+  /* slate-400 equivalent */
+}
+
+/* Ensure Tailwind 4 dark: variant works with .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -12,21 +27,42 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Dark mode support */
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--foreground);
+}
+
+p {
+  color: var(--text-muted);
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+input,
+select,
+textarea {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 0.9375rem;
+}
+
+button {
+  font-size: 0.9375rem;
 }

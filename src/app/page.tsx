@@ -30,7 +30,7 @@ export default function Home() {
                 priority
               />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            <h1>
               Bienvenue
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-center">
@@ -42,7 +42,6 @@ export default function Home() {
             <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Email ou Identifiant
               </label>
@@ -61,7 +60,6 @@ export default function Home() {
               <div className="flex justify-between items-center">
                 <label
                   htmlFor="password"
-                  className="text-sm font-semibold text-slate-700 dark:text-slate-300"
                 >
                   Mot de passe
                 </label>

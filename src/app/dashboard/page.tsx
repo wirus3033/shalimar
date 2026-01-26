@@ -37,14 +37,14 @@ export default function DashboardPage() {
     return (
         <div className="space-y-8">
             {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-green-500 to-green-700 rounded-2xl p-8 text-white shadow-xl">
-                <h1 className="text-3xl font-bold mb-2">
+            {/* <div className="bg-gradient-to-r from-green-500 to-green-700 rounded-2xl p-8 text-white shadow-xl">
+                <h1>
                     Bienvenue sur votre tableau de bord !
                 </h1>
                 <p className="text-green-100">
                     Voici un aperçu de vos activités et performances
                 </p>
-            </div>
+            </div> */}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -80,7 +80,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Activity */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                    <h3>
                         Activités Récentes
                     </h3>
                     <div className="space-y-4">
@@ -109,7 +109,7 @@ export default function DashboardPage() {
 
                 {/* Quick Actions */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                    <h3>
                         Actions Rapides
                     </h3>
                     <div className="space-y-3">
