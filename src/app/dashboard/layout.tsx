@@ -17,7 +17,9 @@ import {
     Settings,
     ChevronDown,
     ShieldCheck,
+    UserCog,
 } from "lucide-react";
+import authService from "@/services/auth.service";
 
 export default function DashboardLayout({
     children,
@@ -26,6 +28,7 @@ export default function DashboardLayout({
 }) {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
     const pathname = usePathname();
 
     // Initialize theme from localStorage
@@ -37,6 +40,10 @@ export default function DashboardLayout({
         const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark);
         setIsDarkMode(shouldBeDark);
         document.documentElement.classList.toggle("dark", shouldBeDark);
+
+        // Load user info
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
     }, []);
 
     // Toggle theme
@@ -45,6 +52,10 @@ export default function DashboardLayout({
         setIsDarkMode(newTheme);
         document.documentElement.classList.toggle("dark", newTheme);
         localStorage.setItem("theme", newTheme ? "dark" : "light");
+    };
+
+    const handleLogout = () => {
+        authService.logout();
     };
 
     const menuItems = [
@@ -87,6 +98,11 @@ export default function DashboardLayout({
             name: "Droit d'accès",
             href: "/dashboard/acces",
             icon: ShieldCheck,
+        },
+        {
+            name: "Utilisateur",
+            href: "/dashboard/utilisateur",
+            icon: UserCog,
         },
     ];
 
@@ -182,12 +198,16 @@ export default function DashboardLayout({
                                     </div>
                                     <div className="hidden md:block text-left">
                                         <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                            Utilisateur Connecté
+                                            {user ? (
+                                                `${user.prenom || user.prénom || ""} ${user.nom || ""}`.trim() || "Utilisateur"
+                                            ) : "Utilisateur"}
                                         </p>
                                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            Admin
+                                            {user?.profil || user?.Profil || "Connecté"}
                                         </p>
                                     </div>
+                                    {/* Debug log to verify user object structure - remove after check */}
+                                    {user && console.log("Current stored user:", user)}
                                     <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
@@ -209,14 +229,13 @@ export default function DashboardLayout({
                                                 Paramètres
                                             </Link>
                                             <div className="h-px bg-slate-200 dark:bg-slate-800 my-2"></div>
-                                            <Link
-                                                href="/"
-                                                className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                onClick={() => setIsUserMenuOpen(false)}
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                             >
                                                 <LogOut className="w-4 h-4" />
                                                 Déconnexion
-                                            </Link>
+                                            </button>
                                         </div>
                                     </>
                                 )}
