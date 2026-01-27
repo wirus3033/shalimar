@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Save, X, Loader2, AlertCircle } from "lucide-react";
 import { roomService, Room } from "@/services/room.service";
@@ -8,7 +8,12 @@ import { roomStatusService, RoomStatus } from "@/services/room-status.service";
 import { reservationService, Reservation } from "@/services/reservation.service";
 import { toInputDate } from "@/lib/utils";
 
-export default function NouveauReservationPage() {
+interface ModifierReservationPageProps {
+    params: Promise<{ id: string }>;
+}
+
+export default function ModifierReservationPage({ params }: ModifierReservationPageProps) {
+    const { id } = use(params);
     const router = useRouter();
     const [rooms, setRooms] = useState<Room[]>([]);
     const [statuses, setStatuses] = useState<RoomStatus[]>([]);
@@ -18,7 +23,7 @@ export default function NouveauReservationPage() {
     const [dateError, setDateError] = useState<string | null>(null);
     const [isRoomDropdownOpen, setIsRoomDropdownOpen] = useState(false);
     const [formData, setFormData] = useState({
-        date: toInputDate(new Date()),
+        date: "",
         client: "",
         dateEntree: "",
         dateSortie: "",
@@ -34,19 +39,37 @@ export default function NouveauReservationPage() {
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [roomsData, statusesData] = await Promise.all([
+            const [roomsData, statusesData, reservationData] = await Promise.all([
                 roomService.getAll(),
-                roomStatusService.getAll()
+                roomStatusService.getAll(),
+                reservationService.getById(parseInt(id))
             ]);
+
             setRooms(roomsData);
             setStatuses(statusesData);
+
+            if (reservationData) {
+                setFormData({
+                    date: toInputDate(reservationData.date_dossier),
+                    client: reservationData.nom_client,
+                    dateEntree: toInputDate(reservationData.date_entree),
+                    dateSortie: toInputDate(reservationData.date_sortie),
+                    chambre: reservationData.IDChambre.toString(),
+                    pu: reservationData.PUChambre.toString(),
+                    duree: reservationData.duree.toString(),
+                    montant: reservationData.montant_total.toString(),
+                    paye: reservationData.montant_paye?.toString() || "0",
+                    resteAPayer: reservationData.reste_a_payer?.toString() || "0",
+                    infos: reservationData.informations_complementaires || "",
+                });
+            }
         } catch (err) {
             console.error("Failed to fetch data:", err);
             setError("Erreur lors de la récupération des données.");
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [id]);
 
     useEffect(() => {
         fetchData();
@@ -59,7 +82,6 @@ export default function NouveauReservationPage() {
         setFormData((prev) => {
             const updated = { ...prev, [name]: value };
 
-            // Handle room selection specifically to auto-fill price
             if (name === "chambre") {
                 const selectedRoom = rooms.find(r => r.IDChambre?.toString() === value);
                 if (selectedRoom) {
@@ -67,7 +89,6 @@ export default function NouveauReservationPage() {
                 }
             }
 
-            // Auto-calculate montant and reste à payer
             if (name === "pu" || name === "dateEntree" || name === "dateSortie" || name === "chambre" || name === "duree") {
                 const pu = parseFloat(updated.pu) || 0;
                 let nights = 0;
@@ -83,9 +104,7 @@ export default function NouveauReservationPage() {
                     const sortie = new Date(updated.dateSortie);
                     sortie.setHours(0, 0, 0, 0);
 
-                    if (updated.dateEntree && entree < today) {
-                        setDateError("La date d'entrée ne peut pas être dans le passé");
-                    } else if (updated.dateEntree && updated.dateSortie && sortie <= entree) {
+                    if (updated.dateEntree && updated.dateSortie && sortie <= entree) {
                         setDateError("La date de sortie doit être supérieure à la date d'entrée");
                     }
 
@@ -140,11 +159,11 @@ export default function NouveauReservationPage() {
                 informations_complementaires: formData.infos
             };
 
-            await reservationService.create(reservationData);
+            await reservationService.update(parseInt(id), reservationData);
             router.push("/dashboard/reservation");
         } catch (err: any) {
-            console.error("Failed to create reservation:", err);
-            setError(err.response?.data?.message || "Erreur lors de la création de la réservation. Veuillez réessayer.");
+            console.error("Failed to update reservation:", err);
+            setError(err.response?.data?.message || "Erreur lors de la modification de la réservation. Veuillez réessayer.");
         } finally {
             setIsSubmitting(false);
         }
@@ -153,8 +172,6 @@ export default function NouveauReservationPage() {
     const handleRoomSelect = (room: Room) => {
         setFormData(prev => {
             const updated = { ...prev, chambre: room.IDChambre?.toString() || "", pu: room.tarif.toString() };
-
-            // Recalculate based on new room/price
             const duree = parseInt(updated.duree) || 0;
             if (duree > 0 && !dateError) {
                 updated.montant = (room.tarif * duree).toString();
@@ -174,8 +191,18 @@ export default function NouveauReservationPage() {
     const availableRooms = rooms.filter(r => {
         const status = statuses.find(s => s.idStatus === r.IDstatusChambre);
         const label = status?.libele.toLowerCase() || "";
+        // In modification mode, the current room should also be listed if it's the one selected
+        if (r.IDChambre?.toString() === formData.chambre) return true;
         return label.includes("disponible") && !label.includes("indisponible");
     });
+
+    if (isLoading && !formData.client) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6" onClick={() => setIsRoomDropdownOpen(false)}>
@@ -190,10 +217,10 @@ export default function NouveauReservationPage() {
                     </button>
                     <div>
                         <h1>
-                            Nouvelle Réservation
+                            Modification de la Réservation
                         </h1>
                         <p className="mt-1">
-                            Remplissez les informations pour créer une nouvelle réservation.
+                            Modifiez les informations de la réservation pour {formData.client}.
                         </p>
                     </div>
                 </div>
@@ -250,7 +277,6 @@ export default function NouveauReservationPage() {
                                 name="dateEntree"
                                 value={formData.dateEntree}
                                 onChange={handleInputChange}
-                                min={new Date().toISOString().split("T")[0]}
                                 required
                                 className={`w-full h-12 px-4 bg-white dark:bg-slate-900 border-2 ${dateError && (dateError.includes("entrée") || dateError.includes("passé")) ? "border-red-500 shadow-red-100" : "border-slate-200 dark:border-slate-800 hover:border-green-500/50"} rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-500/10 text-slate-900 dark:text-white transition-all shadow-sm`}
                             />
@@ -266,7 +292,7 @@ export default function NouveauReservationPage() {
                                 name="dateSortie"
                                 value={formData.dateSortie}
                                 onChange={handleInputChange}
-                                min={formData.dateEntree || new Date().toISOString().split("T")[0]}
+                                min={formData.dateEntree}
                                 required
                                 className={`w-full h-12 px-4 bg-white dark:bg-slate-900 border-2 ${dateError && dateError.includes("sortie") ? "border-red-500 shadow-red-100" : "border-slate-200 dark:border-slate-800 hover:border-green-500/50"} rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-500/10 text-slate-900 dark:text-white transition-all shadow-sm`}
                             />
@@ -437,7 +463,7 @@ export default function NouveauReservationPage() {
                             ) : (
                                 <Save className="w-5 h-5" />
                             )}
-                            {isSubmitting ? "Enregistrement..." : "Enregistrer la réservation"}
+                            {isSubmitting ? "Mise à jour..." : "Mettre à jour la réservation"}
                         </button>
                     </div>
                 </form>

@@ -87,7 +87,7 @@ const AvailabilityRing = ({ percentage }: { percentage: number }) => {
             </svg>
             <div className="absolute flex flex-col items-center">
                 <span className="text-2xl font-black text-slate-900 dark:text-white">{percentage}%</span>
-                <span className="text-[10px] uppercase font-bold text-slate-400">Occupé</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400">Dispo</span>
             </div>
         </div>
     );
@@ -113,7 +113,7 @@ export default function DashboardPage() {
             const availableCount = rooms.filter(r => {
                 const status = statuses.find(s => s.idStatus === r.IDstatusChambre);
                 const label = status?.libele.toLowerCase() || "";
-                return label.includes("disponible") && !label.includes("lib");
+                return label.includes("disponible") && !label.includes("indisponible");
             }).length;
 
             setStats({
@@ -140,7 +140,7 @@ export default function DashboardPage() {
         purchaseHistory: [10, 15, 12, 18, 14, 20, 18]
     };
 
-    const occupancyRate = stats.total > 0 ? Math.round((stats.occupied / stats.total) * 100) : 0;
+    const occupancyRate = stats.total > 0 ? Math.round((stats.available / stats.total) * 100) : 0;
 
     return (
         <div className="min-h-screen space-y-8 animate-in fade-in duration-700 pb-10">
@@ -228,11 +228,11 @@ export default function DashboardPage() {
                                 <p className="text-sm font-black text-slate-900 dark:text-white">{stats.total}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">Dispo</p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase">Disponible</p>
                                 <p className="text-sm font-black text-green-500">{stats.available}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">Occupé</p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase">Indisponible</p>
                                 <p className="text-sm font-black text-blue-500">{stats.occupied}</p>
                             </div>
                         </div>

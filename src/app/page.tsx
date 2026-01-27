@@ -5,6 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { authService } from "@/services/auth.service";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Home() {
   const [login, setLogin] = useState("");
@@ -15,16 +16,20 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Load saved login on mount
-  useState(() => {
+  // Load saved credentials on mount
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLogin = localStorage.getItem("rememberedLogin");
+      const savedPassword = localStorage.getItem("rememberedPassword");
       if (savedLogin) {
         setLogin(savedLogin);
+        if (savedPassword) {
+          setPassword(savedPassword);
+        }
         setRememberMe(true);
       }
     }
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +42,10 @@ export default function Home() {
       if (typeof window !== "undefined") {
         if (rememberMe) {
           localStorage.setItem("rememberedLogin", login);
+          localStorage.setItem("rememberedPassword", password);
         } else {
           localStorage.removeItem("rememberedLogin");
+          localStorage.removeItem("rememberedPassword");
         }
       }
 
