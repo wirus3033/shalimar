@@ -18,8 +18,11 @@ import {
     ChevronDown,
     ShieldCheck,
     UserCog,
+    ShoppingCart,
+    Wallet,
 } from "lucide-react";
 import authService from "@/services/auth.service";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 
 export default function DashboardLayout({
     children,
@@ -83,6 +86,16 @@ export default function DashboardLayout({
             name: "Client",
             href: "/dashboard/client",
             icon: Users,
+        },
+        {
+            name: "Achat",
+            href: "/dashboard/achat",
+            icon: ShoppingCart,
+        },
+        {
+            name: "Dépense",
+            href: "/dashboard/depense",
+            icon: Wallet,
         },
         {
             name: "Sortie",
@@ -165,13 +178,7 @@ export default function DashboardLayout({
 
                         <div className="flex items-center gap-3">
                             {/* Notification Icon */}
-                            <button
-                                className="relative p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 group"
-                                aria-label="Notifications"
-                            >
-                                <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-                                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ring-2 ring-white dark:ring-slate-900"></span>
-                            </button>
+                            <NotificationBell />
 
                             {/* Theme Toggle */}
                             <button
