@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { roomService } from "@/services/room.service";
 import { roomStatusService } from "@/services/room-status.service";
+import { reservationService } from "@/services/reservation.service";
+import { achatService } from "@/services/achat.service";
 
 // --- Custom UI Components ---
 
@@ -100,14 +102,19 @@ export default function DashboardPage() {
         total: 0,
         available: 0,
         occupied: 0,
+        dailyRevenue: 0,
+        dailyPurchases: 0,
+        monthlyStats: [] as { month: number; revenue: number; purchases: number }[]
     });
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
         try {
-            const [rooms, statuses] = await Promise.all([
+            const [rooms, statuses, reservations, purchases] = await Promise.all([
                 roomService.getAll(),
-                roomStatusService.getAll()
+                roomStatusService.getAll(),
+                reservationService.getAll(),
+                achatService.getAll()
             ]);
 
             const availableCount = rooms.filter(r => {
@@ -116,10 +123,49 @@ export default function DashboardPage() {
                 return label.includes("disponible") && !label.includes("indisponible");
             }).length;
 
+            const isToday = (date: any) => {
+                if (!date) return false;
+                const d = new Date(date);
+                const today = new Date();
+                return d.getFullYear() === today.getFullYear() &&
+                    d.getMonth() === today.getMonth() &&
+                    d.getDate() === today.getDate();
+            };
+
+            const dailyRevenue = reservations
+                .filter(res => isToday(res.date_entree))
+                .reduce((sum, res) => sum + (parseFloat(String(res.montant_total)) || 0), 0);
+
+            const dailyPurchases = purchases
+                .filter(a => isToday(a.date_achat))
+                .reduce((sum, a) => sum + (parseFloat(String(a.montant)) || 0), 0);
+
+            const monthlyStats = Array.from({ length: 12 }, (_, i) => {
+                const month = i + 1;
+                const revenue = reservations
+                    .filter(res => {
+                        const d = new Date(res.date_entree);
+                        return d.getFullYear() === new Date().getFullYear() && (d.getMonth() + 1) === month;
+                    })
+                    .reduce((sum, res) => sum + (parseFloat(String(res.montant_total)) || 0), 0);
+
+                const purchasesCount = purchases
+                    .filter(a => {
+                        const d = new Date(a.date_achat);
+                        return d.getFullYear() === new Date().getFullYear() && (d.getMonth() + 1) === month;
+                    })
+                    .reduce((sum, a) => sum + (parseFloat(String(a.montant)) || 0), 0);
+
+                return { month, revenue, purchases: purchasesCount };
+            });
+
             setStats({
                 total: rooms.length,
                 available: availableCount,
                 occupied: rooms.length - availableCount,
+                dailyRevenue,
+                dailyPurchases,
+                monthlyStats
             });
         } catch (err) {
             console.error(err);
@@ -166,16 +212,18 @@ export default function DashboardPage() {
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Chiffre d'Affaires</p>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white">0 Ar</h2>
-                                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1 mt-1">
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white">
+                                    {stats.dailyRevenue.toLocaleString()} Ar
+                                </h2>
+                                {/* <p className="text-[10px] font-bold text-green-500 flex items-center gap-1 mt-1">
                                     <ArrowUpRight className="w-3 h-3" /> +12% vs hier
-                                </p>
+                                </p> */}
                             </div>
                             <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-xl">
                                 <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
                             </div>
                         </div>
-                        <Sparkline data={mockData.revenueHistory} color="#10b981" />
+                        {/* <Sparkline data={mockData.revenueHistory} color="#10b981" /> */}
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all h-[180px]">
@@ -183,31 +231,33 @@ export default function DashboardPage() {
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Dépenses</p>
                                 <h2 className="text-3xl font-black text-slate-900 dark:text-white">0 Ar</h2>
-                                <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 mt-1">
+                                {/* <p className="text-[10px] font-bold text-red-500 flex items-center gap-1 mt-1">
                                     <ArrowDownRight className="w-3 h-3" /> -5% vs hier
-                                </p>
+                                </p> */}
                             </div>
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                                 <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                             </div>
                         </div>
-                        <Sparkline data={mockData.expenseHistory} color="#3b82f6" />
+                        {/* <Sparkline data={mockData.expenseHistory} color="#3b82f6" /> */}
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-xl transition-all h-[180px]">
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Achats</p>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white">0 Ar</h2>
-                                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1 mt-1">
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white">
+                                    {stats.dailyPurchases.toLocaleString()} Ar
+                                </h2>
+                                {/* <p className="text-[10px] font-bold text-green-500 flex items-center gap-1 mt-1">
                                     <ArrowUpRight className="w-3 h-3" /> +8% vs hier
-                                </p>
+                                </p> */}
                             </div>
                             <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                                 <ShoppingCart className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                             </div>
                         </div>
-                        <Sparkline data={mockData.purchaseHistory} color="#f59e0b" />
+                        {/* <Sparkline data={mockData.purchaseHistory} color="#f59e0b" /> */}
                     </div>
                 </div>
 
@@ -257,20 +307,35 @@ export default function DashboardPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                            {months.map((m, i) => (
-                                <tr key={i} className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-default">
-                                    <td className="px-8 py-4 font-bold text-slate-900 dark:text-white">{m}</td>
-                                    <td className="px-8 py-4 text-right font-black text-slate-900 dark:text-white">0 Ar</td>
-                                    <td className="px-8 py-4 text-right font-black text-slate-400">0 Ar</td>
-                                    <td className="px-8 py-4 text-right font-black text-green-500">+0 Ar</td>
-                                    <td className="px-8 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <span className="text-xs font-bold text-slate-500">0 Ar</span>
+                            {months.map((m, i) => {
+                                const mData = stats.monthlyStats.find(s => s.month === (i + 1));
+                                const revenue = mData?.revenue || 0;
+                                const purchases = mData?.purchases || 0;
+                                const expenses = 0; // Depenses module not yet implementation
+                                const profit = revenue - expenses - purchases;
 
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                return (
+                                    <tr key={i} className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-default">
+                                        <td className="px-8 py-4 font-bold text-slate-900 dark:text-white">{m}</td>
+                                        <td className="px-8 py-4 text-right font-black text-slate-900 dark:text-white">
+                                            {revenue.toLocaleString()} Ar
+                                        </td>
+                                        <td className="px-8 py-4 text-right font-black text-slate-400">
+                                            {expenses.toLocaleString()} Ar
+                                        </td>
+                                        <td className={`px-8 py-4 text-right font-black ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {profit >= 0 ? '+' : ''}{profit.toLocaleString()} Ar
+                                        </td>
+                                        <td className="px-8 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <span className="text-xs font-bold text-slate-500">
+                                                    {purchases.toLocaleString()} Ar
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
